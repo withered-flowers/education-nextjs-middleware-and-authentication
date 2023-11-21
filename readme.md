@@ -67,4 +67,109 @@ Pada langkah ini kita akan membuat halaman `/login` dan `/register` yang akan di
 
 Langkah ini hanya sebatas "membuat tampilan" saja yah, belum ada wiring / logic yang terkait dengan login dan register.
 
+Adapun langkah langkahnya adalah sebagai berikut:
+
+1. Membuat sebuah folder baru pada `src` dengan nama `login` (`src/app/login`)
+1. Membuat sebuah file baru dengan nama `page.tsx` pada folder tersebut (`src/app/login/page.tsx`) dan menuliskan kode berikut:
+
+   ```tsx
+   import Link from "next/link";
+
+   const LoginPage = () => {
+     return (
+       <section className="flex h-screen w-full flex-col items-center justify-center gap-4">
+         <form action="" className="flex min-w-[25vw] flex-col gap-2">
+           <h1 className="text-center text-3xl font-semibold text-slate-700">
+             Login Page
+           </h1>
+           <input
+             className="rounded px-4 py-2"
+             type="email"
+             id="email"
+             name="email"
+             placeholder="Email"
+           />
+           <input
+             className="rounded px-4 py-2"
+             type="password"
+             id="password"
+             name="password"
+             placeholder="Password"
+           />
+           <button
+             type="submit"
+             className="rounded bg-emerald-300 px-4 py-2 transition-colors duration-300 hover:bg-emerald-500 hover:text-white/90"
+           >
+             Login
+           </button>
+         </form>
+         <Link
+           href="/register"
+           className="text-blue-400 underline underline-offset-4 transition-colors duration-300 hover:text-blue-600"
+         >
+           or do you want to register ... ?
+         </Link>
+       </section>
+     );
+   };
+
+   export default LoginPage;
+   ```
+
+1. Membuat sebuah folder baru pada `app` dengan nama `register` (`src/app/register`)
+1. Membuat sebuah file baru dengan nama `page.tsx` pada folder tersebut (`src/app/register/page.tsx`) dan menuliskan kode berikut:
+
+   ```tsx
+   import Link from "next/link";
+
+   const RegisterPage = () => {
+     return (
+       <section className="flex h-screen w-full flex-col items-center justify-center gap-4">
+         <form action="" className="flex min-w-[25vw] flex-col gap-2">
+           <h1 className="text-center text-3xl font-semibold text-slate-700">
+             Register Page
+           </h1>
+           <input
+             className="rounded px-4 py-2"
+             type="text"
+             id="username"
+             name="username"
+             placeholder="Username"
+           />
+           <input
+             className="rounded px-4 py-2"
+             type="email"
+             id="email"
+             name="email"
+             placeholder="Email"
+           />
+           <input
+             className="rounded px-4 py-2"
+             type="password"
+             id="password"
+             name="password"
+             placeholder="Password"
+           />
+           <button
+             type="submit"
+             className="rounded bg-emerald-300 px-4 py-2 transition-colors duration-300 hover:bg-emerald-500 hover:text-white/90"
+           >
+             Register
+           </button>
+         </form>
+         <Link
+           href="/login"
+           className="text-blue-400 underline underline-offset-4 transition-colors duration-300 hover:text-blue-600"
+         >
+           or do you want to login ... ?
+         </Link>
+       </section>
+     );
+   };
+
+   export default RegisterPage;
+   ```
+
+1. Membuka browser dan buka tautan `http://localhost:3000/login` dan `http://localhost:3000/register` untuk melihat hasilnya
+
 ## References
