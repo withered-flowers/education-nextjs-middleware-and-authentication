@@ -9,6 +9,7 @@
   - [Step 2 - Membuat Halaman `/login` dan `/register`](#step-2---membuat-halaman-login-dan-register)
   - [Step 3 - Mengimplementasikan `/register`](#step-3---mengimplementasikan-register)
   - [Step 4 - Mengimplementasikan `/login`](#step-4---mengimplementasikan-login)
+  - [Step 5 - Mengimplementasikan Logout pada `DashboardSidebar`](#step-5---mengimplementasikan-logout-pada-dashboardsidebar)
 - [References](#references)
 
 ## Scope Pembelajaran
@@ -483,7 +484,93 @@ Adapun langkah-langkahnya adalah sebagai berikut:
 
    Untuk melihat pembuktian bahwa `cookies` sudah terbuat atau belum, bisa dengan membuka `Developer Tools` pada browser kemudian lihat pada bagian `Application` (pada Chrome) atau `Storage` (pada Firefox)
 
-Sampai pada titik ini, kita sudah berhasil membuat implementasi untu `register` dan `login`. Namun masih ada kelemahannya, yaitu, masih belum bisa membatasi halaman tertentu (Guarding) untuk hanya bisa diakses oleh user yang sudah login atau yang belum login:
+### Step 5 - Mengimplementasikan Logout pada `DashboardSidebar`
+
+Pada langkah ini kita akan mengimplementasikan Logout pada `DashboardSidebar` yang akan menghapus `cookies` yang sudah dibuat sebelumnya, dan akan melakukan redirect ke halaman `/login`.
+
+Adapun langkah-langkahnya adalah sebagai berikut:
+
+1. Membuka file `DashboardSidebar.tsx` (`src/components/DashboardSidebar.tsx`) dan memodifikasi filenya menjadi berikut:
+
+   ```tsx
+   import Link from "next/link";
+
+   // Import cookies dari next/headers
+   import { cookies } from "next/headers";
+
+   // Import redirect dari next/navigation
+   import { redirect } from "next/navigation";
+
+   const DashboardSidebar = () => {
+     return (
+       <aside className="h-full w-64 bg-gray-100 p-4 dark:bg-zinc-800/30">
+         <h2 className="mb-4 text-2xl font-semibold">Navigation</h2>
+         {/* Sidebar */}
+         <ul>
+           <li>
+             <Link
+               className="text-blue-400 underline underline-offset-4 transition-colors duration-300 hover:text-blue-600"
+               href="/"
+             >
+               Home
+             </Link>
+           </li>
+           <li>
+             <Link
+               className="text-blue-400 underline underline-offset-4 transition-colors duration-300 hover:text-blue-600"
+               href="/about"
+             >
+               About
+             </Link>
+           </li>
+           <li>
+             <Link
+               className="text-blue-400 underline underline-offset-4 transition-colors duration-300 hover:text-blue-600"
+               href="/dashboard"
+             >
+               Dashboard
+             </Link>
+           </li>
+           <li className="ml-4">
+             <Link
+               className="text-blue-400 underline underline-offset-4 transition-colors duration-300 hover:text-blue-600"
+               href="/dashboard/jokes"
+             >
+               Dashboard - Jokes
+             </Link>
+           </li>
+         </ul>
+         {/* Membuat tombol Logout "ala" server (non-interactive) dengan menggunakan Form */}
+         <form
+           className="mt-8 text-center"
+           // Karena SideBar ini merupakan Server Component, maka tidak bisa menggunakan onSubmit, oleh karena itu, solusinya adalah menggunakan server action
+           action={async () => {
+             "use server";
+
+             // Menghapus cookie token
+             cookies().delete("token");
+
+             // Redirect ke halaman login
+             redirect("/login");
+           }}
+         >
+           <button
+             type="submit"
+             className="rounded bg-blue-400 px-4 py-2 transition-colors duration-300 hover:bg-blue-600 hover:text-white/90"
+           >
+             Logout
+           </button>
+         </form>
+       </aside>
+     );
+   };
+
+   export default DashboardSidebar;
+   ```
+
+1. Membuka browser dan melakukan login, kemudian tekan tombol `Logout`, apakah akan berpindah ke halaman `/login` dan cookies sudah terhapus?
+
+Sampai pada titik ini, kita sudah berhasil membuat implementasi untu `register` dan `login` serta `logout`. Namun masih ada kelemahannya, yaitu, masih belum bisa membatasi halaman tertentu (`Guarding`) untuk hanya bisa diakses oleh user yang sudah login atau yang belum login:
 
 - `User` yang sudah melakukan login, tidak bisa masuk ke halaman `/login` dan `/register`
 - `User` yang belum melakukan login, tidak bisa masuk ke halaman `/dashboard` dan turunannya
