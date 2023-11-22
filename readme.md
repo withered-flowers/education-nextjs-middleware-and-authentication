@@ -5,6 +5,10 @@
 - [Scope Pembelajaran](#scope-pembelajaran)
 - [Disclaimer](#disclaimer)
 - [Demo](#demo)
+  - [Step 1 - Membuat fungsi yang menggunakan `jsonwebtoken`](#step-1---membuat-fungsi-yang-menggunakan-jsonwebtoken)
+  - [Step 2 - Membuat Halaman `/login` dan `/register`](#step-2---membuat-halaman-login-dan-register)
+  - [Step 3 - Mengimplementasikan `/register`](#step-3---mengimplementasikan-register)
+  - [Step 4 - Mengimplementasikan `/login`](#step-4---mengimplementasikan-login)
 - [References](#references)
 
 ## Scope Pembelajaran
@@ -325,6 +329,167 @@ Adapun langkah langkahnya adalah sebagai berikut:
 
    Apakah sudah berhasil melakukan register dan bisa berpindah ke halaman `/login`?
 
-   (Untuk melihat pembuktian bahwa data sudah masuk atau belum, bisa dengan membuka MongoDB Atlas secara langsung dan melihat collection-nya yah !)
+   Untuk melihat pembuktian bahwa data sudah masuk atau belum, bisa dengan membuka MongoDB Atlas secara langsung dan melihat collection-nya yah !
+
+### Step 4 - Mengimplementasikan `/login`
+
+Pada langkah ini kita akan mencoba untuk mengimplementasikan `/login` dengan membuat suatu `server actions` pada file yang terpisah `action.ts` yang akan membuat sebuah logic untuk:
+
+- Mencari email berdasarkan inputan yang ada
+- Membandingkan inputan password dengan hash password dari data user yang ditemukan
+- Membuat JSON Web Token yang akan digunakan untuk autentikasi nantinya
+- Menyimpan JSON Web Token di suatu tempat yang aman
+- Me-redirect ke halaman `/dashboard/jokes` apabila sudah selesai melakukan login
+
+Adapun langkah-langkahnya adalah sebagai berikut:
+
+1. Membuat sebuah file baru dengan nama `action.ts` pada folder `login` (`src/app/login/action.ts`) dan menuliskan kode sebagai berikut:
+
+   ```ts
+   // Karena ini menggunakan server actions, maka harus dideklarasikan bahwa ini hanya berjalan di server saja, maka dari itu, gunakan "use server"
+   "use server";
+
+   import { getUserByEmail } from "@/db/models/user";
+   import { compareTextWithHash } from "@/db/utils/hash";
+   import { createToken } from "@/lib/jwt";
+
+   import { redirect } from "next/navigation";
+
+   // Di sini kita akan membuat schema inputan login, maka dari itu, sekalian kita validasi dengan zod
+   import { z } from "zod";
+
+   // Di sini kita akan menyimpan data token pada cookies, maka dari itu, kita akan menggunakan cookies dari next/headers
+   // !! cookies tidak bisa di-import secara otomatis, jadi harus diketik manual yah
+   import { cookies } from "next/headers";
+
+   // Pada action ini kita akan melakukan request ke server untuk login
+   // Karena kita di sini belum memiliki backend yang bisa di-call, kita akan membuat logicnya di sini (asumsikan di sini se-akan-akan kita sedang berada di server)
+   export const doLogin = async (formData: FormData) => {
+     const loginInputSchema = z.object({
+       email: z.string().email(),
+       password: z.string(),
+     });
+
+     // Mengambil data dari form
+     const email = formData.get("email");
+     const password = formData.get("password");
+
+     // Memvalidasi data input dengan zod
+     const parsedData = loginInputSchema.safeParse({
+       email,
+       password,
+     });
+
+     if (!parsedData.success) {
+       // !! Ingat, jangan di-throw kecuali ingin menghandle error di sisi client via error.tsx !
+       const errPath = parsedData.error.issues[0].path[0];
+       const errMessage = parsedData.error.issues[0].message;
+       const errFinalMessage = `${errPath} - ${errMessage}`;
+
+       // Mengembalikan error via redirect
+       return redirect(`http://localhost:3000/login?error=${errFinalMessage}`);
+     }
+
+     // Memvalidasi data terhadap database
+     const user = await getUserByEmail(parsedData.data.email);
+
+     if (
+       !user ||
+       !compareTextWithHash(parsedData.data.password, user.password)
+     ) {
+       return redirect(
+         `http://localhost:3000/login?error=Invalid%20credentials`
+       );
+     }
+
+     // Membuat Payload dan Token
+     const payload = {
+       id: user._id,
+       email: user.email,
+     };
+
+     const token = createToken(payload);
+
+     // Menyimpan token dengan menggunakan cookies
+     cookies().set("token", token, {
+       httpOnly: true,
+       secure: true,
+       // Meng-set expiration time dari cookies
+       expires: new Date(Date.now() + 1000 * 60 * 60), // 1 hour
+     });
+
+     // Melakukan redirect ke halaman "/dashboard/jokes"
+     return redirect(`http://localhost:3000/dashboard/jokes`);
+   };
+   ```
+
+1. Membuka file `page.tsx` pada folder `login` (`/src/app/login/page.tsx`) dan modifikasi filenya menjadi sebagai berikut:
+
+   ```tsx
+   import Link from "next/link";
+
+   // Mengimport komponen ClientFlashComponent
+   import ClientFlashComponent from "@/components/ClientFlashComponent";
+   // Mengimport server action doLogin
+   import { doLogin } from "./action";
+
+   const LoginPage = () => {
+     return (
+       <section className="flex h-screen w-full flex-col items-center justify-center gap-4">
+         {/* Menggunakan ClientFlashComponent di sini */}
+         <ClientFlashComponent />
+         {/* Menggunakan action doLogin di sini */}
+         <form action={doLogin} className="flex min-w-[25vw] flex-col gap-2">
+           <h1 className="text-center text-3xl font-semibold text-slate-700">
+             Login Page
+           </h1>
+           <input
+             className="rounded px-4 py-2"
+             type="email"
+             id="email"
+             name="email"
+             placeholder="Email"
+           />
+           <input
+             className="rounded px-4 py-2"
+             type="password"
+             id="password"
+             name="password"
+             placeholder="Password"
+           />
+           <button
+             type="submit"
+             className="rounded bg-emerald-300 px-4 py-2 transition-colors duration-300 hover:bg-emerald-500 hover:text-white/90"
+           >
+             Login
+           </button>
+         </form>
+         <Link
+           href="/register"
+           className="text-blue-400 underline underline-offset-4 transition-colors duration-300 hover:text-blue-600"
+         >
+           or do you want to register ... ?
+         </Link>
+       </section>
+     );
+   };
+
+   export default LoginPage;
+   ```
+
+1. Membuka kembali browser dan buka tautan `http://localhost:3000/login` untuk melihat hasilnya.
+
+   Apakah sudah berhasil melakukan login dan bisa berpindah ke halaman `/dashboard/jokes`?
+
+   Untuk melihat pembuktian bahwa `cookies` sudah terbuat atau belum, bisa dengan membuka `Developer Tools` pada browser kemudian lihat pada bagian `Application` (pada Chrome) atau `Storage` (pada Firefox)
+
+Sampai pada titik ini, kita sudah berhasil membuat implementasi untu `register` dan `login`. Namun masih ada kelemahannya, yaitu, masih belum bisa membatasi halaman tertentu (Guarding) untuk hanya bisa diakses oleh user yang sudah login atau yang belum login:
+
+- `User` yang sudah melakukan login, tidak bisa masuk ke halaman `/login` dan `/register`
+- `User` yang belum melakukan login, tidak bisa masuk ke halaman `/dashboard` dan turunannya
+
+Nah untuk itu kita harus mempelajari apa itu `middleware` pada NextJS terlebih dahulu.
+
+### Intermezzo - Middleware NextJS
 
 ## References

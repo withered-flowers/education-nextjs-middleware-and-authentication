@@ -1,9 +1,17 @@
 import Link from "next/link";
 
+// Mengimport komponen ClientFlashComponent
+import ClientFlashComponent from "@/components/ClientFlashComponent";
+// Mengimport server action doLogin
+import { doLogin } from "./action";
+
 const LoginPage = () => {
   return (
     <section className="flex h-screen w-full flex-col items-center justify-center gap-4">
-      <form action="" className="flex min-w-[25vw] flex-col gap-2">
+      {/* Menggunakan ClientFlashComponent di sini */}
+      <ClientFlashComponent />
+      {/* Menggunakan action doLogin di sini */}
+      <form action={doLogin} className="flex min-w-[25vw] flex-col gap-2">
         <h1 className="text-center text-3xl font-semibold text-slate-700">
           Login Page
         </h1>
