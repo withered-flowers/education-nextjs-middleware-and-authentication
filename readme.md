@@ -628,4 +628,16 @@ Nah sekarang kita sudah siap untuk mencoba membuat Middleware paling sederhana y
 
 ### Step 6 - Membuat Middleware untuk mencetak route yang dijalankan
 
+```ts
+// File: middleware.ts
+import { NextRequest, NextResponse } from "next/server";
+
+export const middleware = (request: NextRequest) => {
+  console.log(request.method, request.url);
+
+  // Seperti pada Express, karena ini middleware, kita harus meng-"sliding" supaya request bisa dilanjutkan ke handler berikutnya dengan menggunakan "next()"
+  return NextResponse.next();
+};
+```
+
 ## References
