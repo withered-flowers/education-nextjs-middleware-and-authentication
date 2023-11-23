@@ -413,10 +413,14 @@ Adapun langkah-langkahnya adalah sebagai berikut:
 
      // Menyimpan token dengan menggunakan cookies
      cookies().set("token", token, {
+       // Meng-set cookie agar hanya bisa diakses melalui HTTP(S)
        httpOnly: true,
-       secure: true,
+       // Meng-set cookie agar hanya bisa diakses melalui HTTPS, karena ini hanya untuk development, maka kita akan set false
+       secure: false,
        // Meng-set expiration time dari cookies
        expires: new Date(Date.now() + 1000 * 60 * 60), // 1 hour
+       // Meng-set cookie agar hanya bisa diakses melalui domain yang sama
+       sameSite: "strict",
      });
 
      // Melakukan redirect ke halaman "/dashboard/jokes"
@@ -683,4 +687,378 @@ Pada langkah ini kita akan mencoba untuk menggunakan middleware sederhana untuk 
 
    Sampai pada titik ini kita sudah berhasil membuat middleware yang sederhana yah !
 
+### Step 7 - Mengimplementasikan Middleware Authentication (BackEnd)
+
+**Disclaimer**:
+
+- Pada langkah ini secara efektif kita akan mematikan user untuk tidak bisa melakukan `register` yah !
+- Untuk `login` masih bisa dilakukan karena kita tidak memanfaatkan `api/users` untuk melakukan login, melainkan secara direct via `server actions`
+
+Pada langkah ini kita akan mencoba untuk mengimplementasikan Authentication pada backend dengan menggunakan `middleware` yang sudah kita buat sebelumnya.
+
+BackEnd yang dimaksud di sini adalah `/api` yang sudah kita buat sebelumnya.
+
+Harapan kita adalah, pada saat user mengakses `/api` user harus sudah ter-authentikasi via `cookies` yang sudah kita buat sebelumnya.
+
+Adapun langkah-langkahnya adalah sebagai berikut:
+
+1. Membuka file `middleware.ts` (`src/middleware.ts`) dan memodifikasi file menjadi sebagai berikut:
+
+   ```ts
+   import { NextRequest, NextResponse } from "next/server";
+
+   // ?? Di sini kita akan menggunakan cookies
+   import { cookies } from "next/headers";
+   import { readPayload } from "./lib/jwt";
+
+   // Ingat: middleware hanya bisa ada satu
+   export const middleware = (request: NextRequest) => {
+     // ?? Karena di sini kita akan menggunakan "logic middleware lebih dari satu", maka di sini kita akan menggunakan banyak perkondisian (menggunakan if / if-else)
+
+     // ?? Karena ini fungsi yang akan dijalankan di semuanya, maka kita akan comment yah
+     // // Di sini harapannya kita hanya ingin menuliskan HTTP method apa yang sedang digunakan dan url apa yang sedang dituju
+     // console.log(request.method, request.url);
+
+     // // Seperti pada Express, karena ini middleware, kita harus meng-"sliding" supaya request bisa dilanjutkan ke handler berikutnya dengan menggunakan "next()"
+     // return NextResponse.next();
+
+     // ?? Di sini kita akan menambahkan kondisi untuk meng-exclude semua url yang mengandung kata "api", "_next/static", "_next/image", dan "favicon.ico"
+     if (
+       !request.url.includes("/api") &&
+       !request.url.includes("_next/static") &&
+       !request.url.includes("_next/image") &&
+       !request.url.includes("favicon.ico")
+     ) {
+       console.log(request.method, request.url);
+     }
+
+     // ?? Di sini kita akan melakukan "authentication" pada route `/api`
+     // ?? Hal ini secara efektif akan membuat semua route `/api` menjadi "private", termasuk di dalamnya adalah untuk melakukan "register" (POST /users)
+     if (request.url.includes("/api")) {
+       console.log("API", request.method, request.url);
+
+       // Di sini kita akan mengambil token yang ada di dalam cookies
+       const cookiesStore = cookies();
+       const token = cookiesStore.get("token");
+
+       // Mari kita coba baca apa isi dari token?
+       console.log("token dari cookieStore", token);
+
+       // Di sini kita akan mengecek apakah token ada atau tidak, apabila tidak ada, maka kita akan mengembalikan response dengan status code 401 (Unauthorized)
+       if (!token) {
+         // Karena asumsi ini adalah DARI /api (route handler), maka kita akan menggunakan NextResponse.json()
+         return NextResponse.json({
+           statusCode: 401,
+           error: "Unauthorized",
+         });
+       }
+
+       // Umumnya setelah ini kita akan melakukan pengecekan apakah token yang ada di dalam cookies itu valid atau tidak, namun karena cookies ini awalnya diberikan dari server, maka kita akan langsung menganggap bahwa token yang ada di dalam cookies itu valid
+       // (Walaupun ini umumnya tergantung konsiderasi dari developer, apakah ingin melakukan validasi lagi atau langsung percaya saja dengan token yang ada di dalam cookies)
+
+       // Setelah itu kita akan membaca token yang ada di dalam cookies dan mengambil data user yang ada di dalamnya.
+       // Ingat asumsinya tokenData itu berisi Object { id: string, email: string }
+       const tokenData = readPayload(token.value) as {
+         id: string;
+         email: string;
+       };
+
+       // Setelah itu umumnya kita akan melakukan penambahan data ke dalam request yang kita miliki (request.user = tokenData), namun karena di sini kita tidak bisa memiliki data tambahan di dalam request, maka kita akan menggunakan antara cookies ATAU headers
+
+       // Pada pembelajaran ini, maka kita akan menggunakan headers
+       const requestHeaders = new Headers(request.headers);
+
+       // Di sini kita akan menambahkan data user ke dalam headers
+       requestHeaders.set("x-user-id", tokenData.id);
+       requestHeaders.set("x-user-email", tokenData.email);
+       requestHeaders.set("x-custom-value", "Ini untuk mencoba data tambahan");
+
+       // Di sini kita akan mengembalikan response dengan headers yang sudah kita tambahkan
+       return NextResponse.next({
+         headers: requestHeaders,
+       });
+     }
+
+     // Jangan lupa untuk meng-"sliding" supaya request bisa dilanjutkan ke handler berikutnya dengan menggunakan "next()"
+     return NextResponse.next();
+   };
+
+   // ?? Karena di sini kita akan menggunakan middleware yang logic dan pathnya berbeda-beda, maka kita tidak akan menggunakan config.matcher
+   // // References:
+   // // https://nextjs.org/docs/app/building-your-application/routing/middleware#matcher
+   // export const config = {
+   //   // Kita akan menggunakan regex untuk melakukan filtering
+   //   // Pada filtering ini akan meng-exclude semua url yang mengandung kata "api", "_next/static", "_next/image", dan "favicon.ico" (perhatikan tanda "!" pada regex)
+   //   matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+
+   //   // !! Warning: pada matcher ini sekalipun regex, wajib bersifat constant (tidak boleh ada variabel di dalamnya. apabila ada variabel, maka akan di-ignore !)
+   // };
+   ```
+
+1. Sampai pada tahap ini, terlihat sepertinya untuk middleware ini sudah berhasil dibuat, namun belum ada pembuktian / penggunaannya.
+
+   Oleh karena itu, kita akan mencoba untuk memodifikasi `/dashboard` (`src/app/dashboard/page.tsx`) untuk mencoba apakah sudah berhasil atau belum dengan menampilkan data user `GET /api/users` pada `/dashboard`.
+
+   Membuka file `page.tsx` pada folder `dashboard` (`src/app/dashboard/page.tsx`) dan memodifikasi filenya menjadi sebagai berikut:
+
+   ```tsx
+   // ?? Untuk pembuktian penggunaan middleware, di sini kita akan membuat sebuah logic untuk mengambil data users dari server via GET /api/users.
+
+   // ?? Sekarang kita akan menggunakan cookies
+   import { cookies } from "next/headers";
+
+   const fetchUsers = async () => {
+     const response = await fetch("http://localhost:3000/api/users", {
+       headers: {
+         // Spesifik hanya pada NextJS, kita harus menambahkan Cookie: cookies().toString() pada headers.
+         Cookie: cookies().toString(),
+       },
+       // Sebenarnya untuk kondisi umumnya, untuk melempar cookies yang sekarang ini sedang disimpan pada client ke server, kita bisa menggunakan credentials: "include" pada fetch. Namun pada NextJS, kita tidak bisa menggunakan credentials: "include" saja.
+       // credentials: "include",
+     });
+     const data = await response.json();
+     return data;
+   };
+
+   const DashboardPage = async () => {
+     const users = await fetchUsers();
+
+     return (
+       <section>
+         <h2 className="text-2xl font-semibold">Dashboard Page</h2>
+         <pre>{JSON.stringify(users, null, 2)}</pre>
+       </section>
+     );
+   };
+
+   export default DashboardPage;
+   ```
+
+1. Membuka file `route.ts` di dalam folder `src/app/api/users` dan memodifikasi file menjadi sebagai berikut:
+
+   ```ts
+   import { createUser, getUsers } from "@/db/models/user";
+   import { NextRequest, NextResponse } from "next/server";
+   import { z } from "zod";
+
+   type MyResponse<T> = {
+     statusCode: number;
+     message?: string;
+     data?: T;
+     error?: string;
+   };
+
+   const userInputSchema = z.object({
+     username: z.string(),
+     email: z.string().email(),
+     password: z.string().min(6),
+     super_admin: z.boolean().optional(),
+     original_name: z.string().optional(),
+   });
+
+   // GET /api/users
+
+   // ?? Di sini kita akan membaca headers yang ada di dalam request
+   export const GET = async (request: NextRequest) => {
+     const users = await getUsers();
+
+     // ?? Kita akan membaca headers yang ada di dalam request
+     console.log("INSIDE GET /api/users");
+     console.log("x-user-id", request.headers.get("x-user-id"));
+     console.log("x-user-email", request.headers.get("x-user-email"));
+     console.log("x-custom-value", request.headers.get("x-custom-value"));
+
+     return Response.json(
+       {
+         statusCode: 200,
+         message: "Pong from GET /api/users !",
+         data: users,
+       },
+       {
+         status: 200,
+       }
+     );
+   };
+
+   // POST /api/users
+   export const POST = async (request: Request) => {
+     try {
+       const data = await request.json();
+
+       const parsedData = userInputSchema.safeParse(data);
+
+       if (!parsedData.success) {
+         throw parsedData.error;
+       }
+
+       const user = await createUser(parsedData.data);
+
+       return NextResponse.json<MyResponse<unknown>>(
+         {
+           statusCode: 201,
+           message: "Pong from POST /api/users !",
+           data: user,
+         },
+         {
+           status: 201,
+         }
+       );
+     } catch (err) {
+       if (err instanceof z.ZodError) {
+         console.log(err);
+
+         const errPath = err.issues[0].path[0];
+         const errMessage = err.issues[0].message;
+
+         return NextResponse.json<MyResponse<never>>(
+           {
+             statusCode: 400,
+             error: `${errPath} - ${errMessage}`,
+           },
+           {
+             status: 400,
+           }
+         );
+       }
+
+       return NextResponse.json<MyResponse<never>>(
+         {
+           statusCode: 500,
+           message: "Internal Server Error !",
+         },
+         {
+           status: 500,
+         }
+       );
+     }
+   };
+   ```
+
+1. Pastikan pada browser user sudah melakukan login, kemudian buka tautan `http://localhost:3000/dashboard` dan lihat hasilnya, apakah data user sudah muncul?
+
+   Ternyata _tydaque_ muncul yah T_T
+
+   Walaupun pada terminal sudah terlihat bahwa token sudah berhasil dibaca oleh middlware pada saat mengakses `API GET http://localhost:3000/api/users`, namun terdapat error yang menyatakan:
+
+   - `Error: The edge runtime does not support Node.js 'crypto' module.`
+
+   Hal ini terjadi karena pada saat menggunakan fungsi `readPayload` yang merupakan `jsonwebtoken.verify`, menggunakan fungsi nodejs `crypto` yang tidak didukung oleh `edge runtime` yang digunakan oleh NextJS.
+
+   Wah bagaimana solusinya yah?
+
+1. Solusi dari permasalahan di atas adalah dengan menggunakan package lainnya selain `jsonwebtoken` untuk melakukan verify, yaitu sebuah package yang bernama `jose`.
+
+   Mari kita pasang package `jose` dengan menggunakan perintah `npm i jose`
+
+   Kemudian membuka kembali file `lib/jwt.ts` dan memodifikasinya menjadi sebagai berikut:
+
+   ```ts
+   import jwt from "jsonwebtoken";
+
+   // ?? Di sini kita akan menggunakan jose
+   import * as jose from "jose";
+
+   const SECRET_KEY = process.env.JWT_SECRET || "this-is-not-a-safe-key";
+
+   // Di sini kita menerima payload dalam bentuk suatu object
+   export const createToken = (payload: object) =>
+     jwt.sign(payload, SECRET_KEY);
+
+   // Di sini kita menerima token berupa string yang berisi token yang akan dibaca.
+   export const readPayload = (token: string) => jwt.verify(token, SECRET_KEY);
+
+   // ?? Di sini kita akan menambahkan fungsi untuk membaca payload dengan jose, karena di sini kita membutuhkan tipe data kembalian, maka kita akan menambahkan generic
+   export const readPayloadJose = async <T>(token: string) => {
+     const secretKey = new TextEncoder().encode(SECRET_KEY);
+     const payloadJose = await jose.jwtVerify<T>(token, secretKey);
+
+     return payloadJose.payload;
+   };
+   ```
+
+1. Kemudian kita akan membuka kembali file `middleware.ts` (`src/middleware.ts`) dan memodifikasinya menjadi sebagai berikut:
+
+   ```ts
+   import { NextRequest, NextResponse } from "next/server";
+
+   // ?? Di sini kita akan menggunakan cookies
+   import { cookies } from "next/headers";
+   // ?? Ini sudah tidak digunakan lagi
+   // import {readPayload } from "./lib/jwt"
+   // ?? Jangan lupa import readPayloadJose
+   import { readPayloadJose } from "./lib/jwt";
+
+   // Ingat: middleware hanya bisa ada satu
+   // ?? Sekarang karena kita akan menggunakan jose yang promise based, ini akan menjadi async
+   export const middleware = async (request: NextRequest) => {
+     // ?? Di sini kita akan menambahkan kondisi untuk meng-exclude semua url yang mengandung kata "api", "_next/static", "_next/image", dan "favicon.ico"
+     if (
+       !request.url.includes("/api") &&
+       !request.url.includes("_next/static") &&
+       !request.url.includes("_next/image") &&
+       !request.url.includes("favicon.ico")
+     ) {
+       console.log(request.method, request.url);
+     }
+
+     // ?? Di sini kita akan melakukan "authentication" pada route `/api`
+     // ?? Hal ini secara efektif akan membuat semua route `/api` menjadi "private", termasuk di dalamnya adalah untuk melakukan "register" (POST /users)
+     if (request.url.includes("/api")) {
+       console.log("API", request.method, request.url);
+
+       // Di sini kita akan mengambil token yang ada di dalam cookies
+       const cookiesStore = cookies();
+       const token = cookiesStore.get("token");
+
+       // Mari kita coba baca apa isi dari token?
+       console.log("token dari cookieStore", token);
+
+       // Di sini kita akan mengecek apakah token ada atau tidak, apabila tidak ada, maka kita akan mengembalikan response dengan status code 401 (Unauthorized)
+       if (!token) {
+         // Karena asumsi ini adalah DARI /api (route handler), maka kita akan menggunakan NextResponse.json()
+         return NextResponse.json({
+           statusCode: 401,
+           error: "Unauthorized",
+         });
+       }
+
+       // Umumnya setelah ini kita akan melakukan pengecekan apakah token yang ada di dalam cookies itu valid atau tidak, namun karena cookies ini awalnya diberikan dari server, maka kita akan langsung menganggap bahwa token yang ada di dalam cookies itu valid
+       // (Walaupun ini umumnya tergantung konsiderasi dari developer, apakah ingin melakukan validasi lagi atau langsung percaya saja dengan token yang ada di dalam cookies)
+
+       // Setelah itu kita akan membaca token yang ada di dalam cookies dan mengambil data user yang ada di dalamnya.
+       // Ingat asumsinya tokenData itu berisi Object { id: string, email: string }
+       // const tokenData = readPayload(token.value) as { id: string; email: string };
+       const tokenData = await readPayloadJose<{ id: string; email: string }>(
+         token.value
+       );
+
+       // Setelah itu umumnya kita akan melakukan penambahan data ke dalam request yang kita miliki (request.user = tokenData), namun karena di sini kita tidak bisa memiliki data tambahan di dalam request, maka kita akan menggunakan antara cookies ATAU headers
+
+       // Pada pembelajaran ini, maka kita akan menggunakan headers
+       const requestHeaders = new Headers(request.headers);
+
+       // Di sini kita akan menambahkan data user ke dalam headers
+       requestHeaders.set("x-user-id", tokenData.id);
+       requestHeaders.set("x-user-email", tokenData.email);
+       requestHeaders.set("x-custom-value", "Ini untuk mencoba data tambahan");
+
+       // Di sini kita akan mengembalikan response dengan headers yang sudah kita tambahkan
+       return NextResponse.next({
+         headers: requestHeaders,
+       });
+     }
+
+     // Jangan lupa untuk meng-"sliding" supaya request bisa dilanjutkan ke handler berikutnya dengan menggunakan "next()"
+     return NextResponse.next();
+   };
+   ```
+
+1. Simpan dan kemudian coba lihat kembali pada browser, apakah sudah berhasil menampilkan data user?
+
+Ya sampai pada pada tahap ini artinya kita sudah berhasil melakukan proses `authentication` pada `middleware` untuk route `/api` yang kita buat sebelumnya.
+
 ## References
+
+- https://nextjs.org/docs/app/building-your-application/routing/middleware
+- https://nextjs.org/docs/app/api-reference/functions/cookies
+- https://www.npmjs.com/package/jose

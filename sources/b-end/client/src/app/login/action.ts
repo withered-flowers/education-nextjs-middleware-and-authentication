@@ -59,10 +59,14 @@ export const doLogin = async (formData: FormData) => {
 
   // Menyimpan token dengan menggunakan cookies
   cookies().set("token", token, {
+    // Meng-set cookie agar hanya bisa diakses melalui HTTP(S)
     httpOnly: true,
-    secure: true,
+    // Meng-set cookie agar hanya bisa diakses melalui HTTPS, karena ini hanya untuk development, maka kita akan set false
+    secure: false,
     // Meng-set expiration time dari cookies
     expires: new Date(Date.now() + 1000 * 60 * 60), // 1 hour
+    // Meng-set cookie agar hanya bisa diakses melalui domain yang sama
+    sameSite: "strict",
   });
 
   // Melakukan redirect ke halaman "/dashboard/jokes"
