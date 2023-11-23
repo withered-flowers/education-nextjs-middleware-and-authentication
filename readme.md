@@ -10,6 +10,9 @@
   - [Step 3 - Mengimplementasikan `/register`](#step-3---mengimplementasikan-register)
   - [Step 4 - Mengimplementasikan `/login`](#step-4---mengimplementasikan-login)
   - [Step 5 - Mengimplementasikan Logout pada `DashboardSidebar`](#step-5---mengimplementasikan-logout-pada-dashboardsidebar)
+  - [Intermezzo - Middleware NextJS](#intermezzo---middleware-nextjs)
+  - [Step 6 - Membuat Middleware untuk mencetak route yang dijalankan](#step-6---membuat-middleware-untuk-mencetak-route-yang-dijalankan)
+  - [Step 7 - Mengimplementasikan Middleware Authentication (BackEnd)](#step-7---mengimplementasikan-middleware-authentication-backend)
 - [References](#references)
 
 ## Scope Pembelajaran
