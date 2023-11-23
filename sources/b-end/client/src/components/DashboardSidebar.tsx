@@ -52,8 +52,8 @@ const DashboardSidebar = () => {
         action={async () => {
           "use server";
 
-          // Menghapus cookie token
-          cookies().delete("token");
+          // Menghapus cookie token bila exists
+          cookies().get("token") && cookies().delete("token");
 
           // Redirect ke halaman login
           redirect("/login");
