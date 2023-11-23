@@ -628,16 +628,59 @@ Nah sekarang kita sudah siap untuk mencoba membuat Middleware paling sederhana y
 
 ### Step 6 - Membuat Middleware untuk mencetak route yang dijalankan
 
-```ts
-// File: middleware.ts
-import { NextRequest, NextResponse } from "next/server";
+Pada langkah ini kita akan mencoba untuk menggunakan middleware sederhana untuk mencetak routing yang sedang dijalankan / dibuka oleh NextJS yah.
 
-export const middleware = (request: NextRequest) => {
-  console.log(request.method, request.url);
+1. Membuat sebuah file baru dengan nama `middleware.ts` pada folder `src` (`/src/middleware.ts`)
+1. Menuliskan kode sebagai berikut:
 
-  // Seperti pada Express, karena ini middleware, kita harus meng-"sliding" supaya request bisa dilanjutkan ke handler berikutnya dengan menggunakan "next()"
-  return NextResponse.next();
-};
-```
+   ```ts
+   import { NextRequest, NextResponse } from "next/server";
+
+   // Ingat: middleware hanya bisa ada satu
+   export const middleware = (request: NextRequest) => {
+     // Di sini harapannya kita hanya ingin menuliskan HTTP method apa yang sedang digunakan dan url apa yang sedang dituju
+     console.log(request.method, request.url);
+
+     // Seperti pada Express, karena ini middleware, kita harus meng-"sliding" supaya request bisa dilanjutkan ke handler berikutnya dengan menggunakan "next()"
+     return NextResponse.next();
+   };
+   ```
+
+1. Membuka pada browser dan buka halaman / routing apapun kemudian lihat hasilnya pada terminal
+
+   Apakah sudah berhasil mencetak routing yang sedang dijalankan?
+
+   Tapi ternyata pada routingan ini masih sangat "bar-bar" yah karena semua routing akan dijalankan, termasuk pada saat membuka `_next/static` yang seharusnya tidak ingin kita tampilkan.
+
+   Oleh karena itu pada langkah selanjutnya kita akan mencoba untuk melakukan filtering pada routing yang akan dijalankan oleh middleware dengan menggunakan matcher yah !
+
+1. Membuka kembali file `middleware.ts` dan memodifikasi filenya menjadi sebagai berikut:
+
+   ```ts
+   import { NextRequest, NextResponse } from "next/server";
+
+   // Ingat: middleware hanya bisa ada satu
+   export const middleware = (request: NextRequest) => {
+     // Di sini harapannya kita hanya ingin menuliskan HTTP method apa yang sedang digunakan dan url apa yang sedang dituju
+     console.log(request.method, request.url);
+
+     // Seperti pada Express, karena ini middleware, kita harus meng-"sliding" supaya request bisa dilanjutkan ke handler berikutnya dengan menggunakan "next()"
+     return NextResponse.next();
+   };
+
+   // References:
+   // https://nextjs.org/docs/app/building-your-application/routing/middleware#matcher
+   export const config = {
+     // Kita akan menggunakan regex untuk melakukan filtering
+     // Pada filtering ini akan meng-exclude semua url yang mengandung kata "api", "_next/static", "_next/image", dan "favicon.ico" (perhatikan tanda "!" pada regex)
+     matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+
+     // !! Warning: pada matcher ini sekalipun regex, wajib bersifat constant (tidak boleh ada variabel di dalamnya. apabila ada variabel, maka akan di-ignore !)
+   };
+   ```
+
+1. Membuka kembali pada browser halaman manapun pada `http://localhost:3000` kemudian lihat hasilnya pada terminal, apakah masih memunculkan `_next/blablabla` ?
+
+   Sampai pada titik ini kita sudah berhasil membuat middleware yang sederhana yah !
 
 ## References
