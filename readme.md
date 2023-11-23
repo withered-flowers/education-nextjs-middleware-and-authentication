@@ -13,6 +13,7 @@
   - [Intermezzo - Middleware NextJS](#intermezzo---middleware-nextjs)
   - [Step 6 - Membuat Middleware untuk mencetak route yang dijalankan](#step-6---membuat-middleware-untuk-mencetak-route-yang-dijalankan)
   - [Step 7 - Mengimplementasikan Middleware Authentication (BackEnd)](#step-7---mengimplementasikan-middleware-authentication-backend)
+  - [Step 8 - Mengimplementasikan Middleware Authentication (FrontEnd)](#step-8---mengimplementasikan-middleware-authentication-frontend)
 - [References](#references)
 
 ## Scope Pembelajaran
@@ -1059,6 +1060,80 @@ Adapun langkah-langkahnya adalah sebagai berikut:
 1. Simpan dan kemudian coba lihat kembali pada browser, apakah sudah berhasil menampilkan data user?
 
 Ya sampai pada pada tahap ini artinya kita sudah berhasil melakukan proses `authentication` pada `middleware` untuk route `/api` yang kita buat sebelumnya.
+
+Lalu bagaimana dengan `Guarding` untuk route `/dashboard` dan turunannya?
+
+### Step 8 - Mengimplementasikan Middleware Authentication (FrontEnd)
+
+Pada langkah ini kita akan mencoba untuk melakukan `Guarding` navigasi pada router `/dashboard` dan turunannya.
+
+Adapun langkah-langkahnya adalah sebagai berikut:
+
+1. Membuat sebuah component baru dengan nama `ServerProtectedComponent.tsx` pada folder `components` (`src/components/ServerProtectedComponent.tsx`) dan menuliskan kode sebagai berikut:
+
+   ```tsx
+   import { cookies } from "next/headers";
+   import { redirect } from "next/navigation";
+
+   const ServerProtectedComponents = ({
+     children,
+   }: {
+     children: React.ReactNode;
+   }) => {
+     // Membaca cookies
+     const cookiesStore = cookies();
+
+     // Mengambil token dari cookies
+     const token = cookiesStore.get("token");
+
+     // Mengecek apabila token tidak ada, maka redirect ke halaman login
+     if (!token || token.value.length <= 0) {
+       redirect("/login");
+     }
+
+     // Di sini kita hanya akan mengembalikan children
+     return <>{children}</>;
+   };
+
+   export default ServerProtectedComponents;
+   ```
+
+1. Karena pada `dashboard` ini kita sudah memanfaatkan `layout.tsx`, maka kita hanya perlu memodifikasi file `layout.tsx` (`src/app/dashboard/layout.tsx`) menjadi sebagai berikut:
+
+   ```tsx
+   import DashboardSidebar from "@/components/DashboardSidebar";
+   // Import ServerProtectedComponents
+   import ServerProtectedComponents from "@/components/ServerProtectedComponents";
+
+   const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
+     return (
+       // Whole Screen
+       // Gunakan ServerProtectedComponents sebagai parent
+       <ServerProtectedComponents>
+         <section className="flex h-screen w-full">
+           {/* Left Side */}
+           <DashboardSidebar />
+
+           {/* Right Side */}
+           <main className="h-full w-full overflow-auto bg-white p-4 dark:bg-zinc-900/30">
+             {/* Content */}
+             {children}
+           </main>
+         </section>
+       </ServerProtectedComponents>
+     );
+   };
+
+   export default DashboardLayout;
+   ```
+
+1. Membuka browser dan buka tautan `http://localhost:3000/login` kemudian melakukan login, dan lihat, apakah sudah bisa masuk ke halaman `/dashboard` serta `/dashboard/jokes` ?
+
+   Sampai pada tahap ini, kita sudah berhasil melakukan `Guarding` pada route `/dashboard` dan turunannya.
+
+Asik bukan?
+
+Pembelajaran ini cukup panjang juga yah, semoga mendapatkan insight yang lebih dalam mengenai `middleware` pada NextJS dan cara menuliskan `authentication` dengan lebih baik yah !
 
 ## References
 
