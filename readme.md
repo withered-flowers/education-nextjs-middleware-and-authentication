@@ -556,7 +556,7 @@ Adapun langkah-langkahnya adalah sebagai berikut:
          >
            <button
              type="submit"
-             className="rounded bg-blue-400 px-4 py-2 transition-colors duration-300 hover:bg-blue-600 hover:text-white/90"
+             className="rounded bg-blue-200 px-4 py-2 transition-colors duration-300 hover:bg-blue-400 hover:text-white"
            >
              Logout
            </button>
@@ -578,5 +578,54 @@ Sampai pada titik ini, kita sudah berhasil membuat implementasi untu `register` 
 Nah untuk itu kita harus mempelajari apa itu `middleware` pada NextJS terlebih dahulu.
 
 ### Intermezzo - Middleware NextJS
+
+Middleware, Middle = Tengah, Ware = Sesuatu. Jadi, Middleware adalah sesuatu yang diselipkan di tengah-tengah.
+
+Di tengah-tengah apa pada NextJS ini? Ya, di tengah-tengah menuju halaman / routing / endpoint tertentu pada NextJS ini, dan bisa memanipulasi request (dengan tipe data `Request` ataupun `NextRequest`) serta response (dengan tipe data `Response` ataupun `NextResponse`).
+
+Namun sedikit berbeda dengan `express` yang bisa membuat middleware untuk dimanapun dan kapanpun di routingnya bisa diselipkan, pada NextJS ini middleware hanya bisa didefinisikan pada satu tempat saja, yaitu pada `src/middleware.ts`
+
+> Apabila didefinisikan pada folder yang lainnya, maka middleware tidak akan berjalan !
+
+Middleware ini akan dijalankan **untuk setiap route yang ada di dalam proyek yang sedang dibuat**.
+
+Nah karena ini cukup sulit, NextJS menyediakan cara untuk mendefinisikan `path` / `route` mana saja yang akan dijalankan middleware, yaitu dengan menggunakan 2 cara:
+
+- `Custom Matcher Config` (auto)
+
+  ```ts
+  // File: middleware.ts, paling bawahnya
+
+  export const config = {
+    matcher: "hanya/akan/berjalan/di/route/ini/saja",
+    // atau dengan menggunakan array bila lebih dari satu route
+    matcher: ["ini/route/pertama", "ini/route/kedua", "dan/route/seterusnya"],
+    // bisa juga dengan menggunakan regex
+    matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+  };
+  ```
+
+- `Conditional Statement` (manual)
+
+  Gunakan cara ini bila kita ingin lebih memilih url ataupun method apa saja yang akan diatur oleh middleware
+
+  ```ts
+  import { NextResponse } from "next/server";
+  import type { NextRequest } from "next/server";
+
+  export function middleware(request: NextRequest) {
+    if (request.nextUrl.pathname.startsWith("/about")) {
+      return NextResponse.rewrite(new URL("/about-2", request.url));
+    }
+
+    if (request.nextUrl.pathname.startsWith("/dashboard")) {
+      return NextResponse.rewrite(new URL("/dashboard/user", request.url));
+    }
+  }
+  ```
+
+Nah sekarang kita sudah siap untuk mencoba membuat Middleware paling sederhana yaitu untuk melakukan console log tiap path mana saja yang dijalankan oleh NextJS ini yah !
+
+### Step 6 - Membuat Middleware untuk mencetak route yang dijalankan
 
 ## References

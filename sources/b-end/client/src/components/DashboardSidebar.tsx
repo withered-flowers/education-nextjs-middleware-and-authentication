@@ -61,7 +61,7 @@ const DashboardSidebar = () => {
       >
         <button
           type="submit"
-          className="rounded bg-blue-400 px-4 py-2 transition-colors duration-300 hover:bg-blue-600 hover:text-white/90"
+          className="rounded bg-blue-200 px-4 py-2 transition-colors duration-300 hover:bg-blue-400 hover:text-white"
         >
           Logout
         </button>
