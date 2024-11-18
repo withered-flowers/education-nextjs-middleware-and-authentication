@@ -2,19 +2,21 @@
 
 ## Table of Content
 
-- [Scope Pembelajaran](#scope-pembelajaran)
-- [Disclaimer](#disclaimer)
-- [Demo](#demo)
-  - [Step 1 - Membuat fungsi yang menggunakan `jsonwebtoken`](#step-1---membuat-fungsi-yang-menggunakan-jsonwebtoken)
-  - [Step 2 - Membuat Halaman `/login` dan `/register`](#step-2---membuat-halaman-login-dan-register)
-  - [Step 3 - Mengimplementasikan `/register`](#step-3---mengimplementasikan-register)
-  - [Step 4 - Mengimplementasikan `/login`](#step-4---mengimplementasikan-login)
-  - [Step 5 - Mengimplementasikan Logout pada `DashboardSidebar`](#step-5---mengimplementasikan-logout-pada-dashboardsidebar)
-  - [Intermezzo - Middleware NextJS](#intermezzo---middleware-nextjs)
-  - [Step 6 - Membuat Middleware untuk mencetak route yang dijalankan](#step-6---membuat-middleware-untuk-mencetak-route-yang-dijalankan)
-  - [Step 7 - Mengimplementasikan Middleware Authentication (BackEnd)](#step-7---mengimplementasikan-middleware-authentication-backend)
-  - [Step 8 - Mengimplementasikan Middleware Authentication (FrontEnd)](#step-8---mengimplementasikan-middleware-authentication-frontend)
-- [References](#references)
+- [Education NextJS - Middleware \& Authentication](#education-nextjs---middleware--authentication)
+  - [Table of Content](#table-of-content)
+  - [Scope Pembelajaran](#scope-pembelajaran)
+  - [Disclaimer](#disclaimer)
+  - [Demo](#demo)
+    - [Step 1 - Membuat fungsi yang menggunakan `jsonwebtoken`](#step-1---membuat-fungsi-yang-menggunakan-jsonwebtoken)
+    - [Step 2 - Membuat Halaman `/login` dan `/register`](#step-2---membuat-halaman-login-dan-register)
+    - [Step 3 - Mengimplementasikan `/register`](#step-3---mengimplementasikan-register)
+    - [Step 4 - Mengimplementasikan `/login`](#step-4---mengimplementasikan-login)
+    - [Step 5 - Mengimplementasikan Logout pada `DashboardSidebar`](#step-5---mengimplementasikan-logout-pada-dashboardsidebar)
+    - [Intermezzo - Middleware NextJS](#intermezzo---middleware-nextjs)
+    - [Step 6 - Membuat Middleware untuk mencetak route yang dijalankan](#step-6---membuat-middleware-untuk-mencetak-route-yang-dijalankan)
+    - [Step 7 - Mengimplementasikan Middleware Authentication (BackEnd)](#step-7---mengimplementasikan-middleware-authentication-backend)
+    - [Step 8 - Mengimplementasikan Middleware Authentication (FrontEnd)](#step-8---mengimplementasikan-middleware-authentication-frontend)
+  - [References](#references)
 
 ## Scope Pembelajaran
 
@@ -49,15 +51,18 @@ Pada langkah ini kita akan mencoba untuk membuat fungsi yang dapat digunakan unt
 Adapun langkah langkahnya adalah sebagai berikut:
 
 1. Membuka folder client (`sources/a-start/client`)
-1. Meng-copy file `.env.example` menjadi `.env`
+1. Meng-copy file `dotenv.example` menjadi `.env.local`
 1. Membuka file `.env` dan mengisi value `MONGODB_CONNECTION_STRING` dengan value yang didapat dari MongoDB Atlas dan `MONGODB_DB_NAME` dengan value `pengembangan` (bila mengikuti pembelajaran sebelumnya)
-1. Masih pada file `.env`, menambahkan sebuah key yang baru dengan nama `JWT_SECRET` dan memberikan value bebas sebanyak minimal 16 karakter
-1. Menginstall package `jsonwebtoken`
-1. Membuat sebuah folder baru pada `src` dengan nama `lib` (`src/lib`)
-1. Membuat sebuah file baru dengan nama `jwt.js` pada folder tersebut (`src/lib/jwt.ts`) dan menuliskan kode sebagai berikut:
+1. Masih pada file `.env.local`, menambahkan sebuah key yang baru dengan nama `JWT_SECRET` dan memberikan value bebas sebanyak minimal 16 karakter
+1. Menginstall package `jsonwebtoken` dengan perintah:
+
+   - `npm install jsonwebtoken`
+   - `npm install -D @types/jsonwebtoken`
+
+1. Membuat sebuah file baru dengan nama `jwt.ts` pada folder `utils` (`src/utils/jwt.ts`) dan menuliskan kode sebagai berikut:
 
    ```ts
-   import jwt, { JwtPayload } from "jsonwebtoken";
+   import jwt, { type JwtPayload } from "jsonwebtoken";
 
    const SECRET_KEY = process.env.JWT_SECRET || "this-is-not-a-safe-key";
 
@@ -93,14 +98,14 @@ Adapun langkah langkahnya adalah sebagai berikut:
              Login Page
            </h1>
            <input
-             className="rounded px-4 py-2"
+             className="rounded px-4 py-2 border border-gray-300"
              type="email"
              id="email"
              name="email"
              placeholder="Email"
            />
            <input
-             className="rounded px-4 py-2"
+             className="rounded px-4 py-2 border border-gray-300"
              type="password"
              id="password"
              name="password"
@@ -140,21 +145,21 @@ Adapun langkah langkahnya adalah sebagai berikut:
              Register Page
            </h1>
            <input
-             className="rounded px-4 py-2"
+             className="rounded px-4 py-2 border border-gray-300"
              type="text"
              id="username"
              name="username"
              placeholder="Username"
            />
            <input
-             className="rounded px-4 py-2"
+             className="rounded px-4 py-2 border border-gray-300"
              type="email"
              id="email"
              name="email"
              placeholder="Email"
            />
            <input
-             className="rounded px-4 py-2"
+             className="rounded px-4 py-2 border border-gray-300"
              type="password"
              id="password"
              name="password"
@@ -1137,6 +1142,6 @@ Pembelajaran ini cukup panjang juga yah, semoga mendapatkan insight yang lebih d
 
 ## References
 
-- https://nextjs.org/docs/app/building-your-application/routing/middleware
-- https://nextjs.org/docs/app/api-reference/functions/cookies
-- https://www.npmjs.com/package/jose
+- <https://nextjs.org/docs/app/building-your-application/routing/middleware>
+- <https://nextjs.org/docs/app/api-reference/functions/cookies>
+- <https://www.npmjs.com/package/jose>
