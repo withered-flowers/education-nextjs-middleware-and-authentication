@@ -1,17 +1,5 @@
-// Di sini kita akan mengimport NextResponse
-// Untuk penjelasannya ada di bawah yah !
-import { NextResponse } from "next/server";
-
-// ?? Step 3 - Mengimplementasikan `GET /api/users` (1)
-// Import fungsi dan type yang diperlukan dari `db/models/user.ts`
-import { getUsers } from "@/db/models/user";
-
-// ?? Step 4 - Mengimplementasikan `POST /api/users` (1)
-// Import fungsi diperlukan dari `db/models/user.ts`
-import { createUser } from "@/db/models/user";
-
-// ?? Step 5 - Mengimplementasikan `zod` Sebagai Validasi Input (1)
-// Mengimport z dari package zod untuk validasi
+import { createUser, getUsers } from "@/db/models/user";
+import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 // Type definitions untuk Response yang akan dikembalikan
@@ -30,7 +18,6 @@ type MyResponse<T> = {
 	error?: string;
 };
 
-// ?? Step 5 - Mengimplementasikan `zod` Sebagai Validasi Input (2)
 // Membuat schema untuk validasi input dari client
 /*
 	Harapan dari input client adalah:
@@ -81,10 +68,16 @@ const UserInputSchema = z
 	});
 
 // GET /api/users
-export const GET = async () => {
-	// ?? Step 3 - Mengimplementasikan `GET /api/users` (2)
+// ?? Di sini kita akan menggunakan NextRequest
+export const GET = async (request: NextRequest) => {
 	// Di sini kita akan menggunakan fungsi getUsers() yang sudah kita buat sebelumnya
 	const users = await getUsers();
+
+	// ?? Kita akan membaca headers yang ada di dalam request
+	console.log("INSIDE GET /api/users");
+	console.log("x-user-id", request.headers.get("x-user-id"));
+	console.log("x-user-email", request.headers.get("x-user-email"));
+	console.log("x-custom-value", request.headers.get("x-custom-value"));
 
 	// Di sini yang akan dikembalikan adalah Response dari Web API
 	// (Standard Web API: Request untuk mendapatkan data dan Request untuk mengirimkan data)
@@ -95,7 +88,6 @@ export const GET = async () => {
 		{
 			statusCode: 200,
 			message: "Pong from GET /api/users !",
-			// ?? Step 3 - Mengimplementasikan `GET /api/users` (3)
 			// Di sini kita akan mengirimkan data users
 			data: users,
 		},
@@ -108,10 +100,8 @@ export const GET = async () => {
 };
 
 // POST /api/users
-// ?? Step 4 - Mengimplementasikan `POST /api/users` (2)
 // Menambahkan parameter request: Request pada POST
 export const POST = async (request: Request) => {
-	// ?? Step 5 - Mengimplementasikan `zod` Sebagai Validasi Input (3)
 	// Membungkus logic dalam try-catch
 	try {
 		// Di sini kita akan menggunakan NextResponse yang merupakan extend dari Response
@@ -128,13 +118,11 @@ export const POST = async (request: Request) => {
     }
   */
 
-		// ?? Step 4 - Mengimplementasikan `POST /api/users` (3)
 		// Di sini kita akan mengambil data yang dikirimkan oleh client
 		// Asumsi: data yang dikirimkan oleh client adalah JSON
 		// Perhatikan bahwa tipe data ini akan selalu menjadi "any"
 		const data = await request.json();
 
-		// ?? Step 5 - Mengimplementasikan `zod` Sebagai Validasi Input (4)
 		// Sebelum data akan digunakan, kita akan melakukan validasi terlebih dahulu
 		// Di sini kita akan menggunakan fungsi safeParse() dari zod
 		const parsedData = UserInputSchema.safeParse(data);
@@ -162,18 +150,15 @@ export const POST = async (request: Request) => {
 		// Di sini kita akan menggunakan fungsi createUser() yang sudah kita buat sebelumnya
 		// const user = await createUser(data);
 
-		// ?? Step 5 - Mengimplementasikan `zod` Sebagai Validasi Input (5)
 		// Di sini kita akan mengirimkan parsedData, bukan data
 		const user = await createUser(parsedData.data);
 
-		// ?? Step 4 - Mengimplementasikan `POST /api/users` (4)
 		// Mengubah tipe kembalian menjadi unknown
 		return NextResponse.json<MyResponse<unknown>>(
 			// Data yang akan dikirimkan ke client
 			{
 				statusCode: 201,
 				message: "Pong from POST /api/users !",
-				// ?? Step 4 - Mengimplementasikan `POST /api/users` (5)
 				// Di sini kita akan mengirimkan data user
 				data: user,
 			},
@@ -185,7 +170,6 @@ export const POST = async (request: Request) => {
 			},
 		);
 	} catch (err) {
-		// ?? Step 5 - Mengimplementasikan `zod` Sebagai Validasi Input (6)
 		// Perhatikan tipe data dari err adalah unknown dan kita akan menangkap error dari zod yang merupakan ZodError
 		// Sehingga di sini kita harus melakukan pengecekan terlebih dahulu
 		if (err instanceof z.ZodError) {
