@@ -2,19 +2,21 @@
 
 ## Table of Content
 
-- [Scope Pembelajaran](#scope-pembelajaran)
-- [Disclaimer](#disclaimer)
-- [Demo](#demo)
-  - [Step 1 - Membuat fungsi yang menggunakan `jsonwebtoken`](#step-1---membuat-fungsi-yang-menggunakan-jsonwebtoken)
-  - [Step 2 - Membuat Halaman `/login` dan `/register`](#step-2---membuat-halaman-login-dan-register)
-  - [Step 3 - Mengimplementasikan `/register`](#step-3---mengimplementasikan-register)
-  - [Step 4 - Mengimplementasikan `/login`](#step-4---mengimplementasikan-login)
-  - [Step 5 - Mengimplementasikan Logout pada `DashboardSidebar`](#step-5---mengimplementasikan-logout-pada-dashboardsidebar)
-  - [Intermezzo - Middleware NextJS](#intermezzo---middleware-nextjs)
-  - [Step 6 - Membuat Middleware untuk mencetak route yang dijalankan](#step-6---membuat-middleware-untuk-mencetak-route-yang-dijalankan)
-  - [Step 7 - Mengimplementasikan Middleware Authentication (BackEnd)](#step-7---mengimplementasikan-middleware-authentication-backend)
-  - [Step 8 - Mengimplementasikan Middleware Authentication (FrontEnd)](#step-8---mengimplementasikan-middleware-authentication-frontend)
-- [References](#references)
+- [Education NextJS - Middleware \& Authentication](#education-nextjs---middleware--authentication)
+  - [Table of Content](#table-of-content)
+  - [Scope Pembelajaran](#scope-pembelajaran)
+  - [Disclaimer](#disclaimer)
+  - [Demo](#demo)
+    - [Step 1 - Membuat fungsi yang menggunakan `jsonwebtoken`](#step-1---membuat-fungsi-yang-menggunakan-jsonwebtoken)
+    - [Step 2 - Membuat Halaman `/login` dan `/register`](#step-2---membuat-halaman-login-dan-register)
+    - [Step 3 - Mengimplementasikan `/register`](#step-3---mengimplementasikan-register)
+    - [Step 4 - Mengimplementasikan `/login`](#step-4---mengimplementasikan-login)
+    - [Step 5 - Mengimplementasikan Logout pada `DashboardSidebar`](#step-5---mengimplementasikan-logout-pada-dashboardsidebar)
+    - [Intermezzo - Middleware NextJS](#intermezzo---middleware-nextjs)
+    - [Step 6 - Membuat Middleware untuk mencetak route yang dijalankan](#step-6---membuat-middleware-untuk-mencetak-route-yang-dijalankan)
+    - [Step 7 - Mengimplementasikan Middleware Authentication (BackEnd)](#step-7---mengimplementasikan-middleware-authentication-backend)
+    - [Step 8 - Mengimplementasikan Middleware Authentication (FrontEnd)](#step-8---mengimplementasikan-middleware-authentication-frontend)
+  - [References](#references)
 
 ## Scope Pembelajaran
 
@@ -49,15 +51,18 @@ Pada langkah ini kita akan mencoba untuk membuat fungsi yang dapat digunakan unt
 Adapun langkah langkahnya adalah sebagai berikut:
 
 1. Membuka folder client (`sources/a-start/client`)
-1. Meng-copy file `.env.example` menjadi `.env`
+1. Meng-copy file `dotenv.example` menjadi `.env.local`
 1. Membuka file `.env` dan mengisi value `MONGODB_CONNECTION_STRING` dengan value yang didapat dari MongoDB Atlas dan `MONGODB_DB_NAME` dengan value `pengembangan` (bila mengikuti pembelajaran sebelumnya)
-1. Masih pada file `.env`, menambahkan sebuah key yang baru dengan nama `JWT_SECRET` dan memberikan value bebas sebanyak minimal 16 karakter
-1. Menginstall package `jsonwebtoken`
-1. Membuat sebuah folder baru pada `src` dengan nama `lib` (`src/lib`)
-1. Membuat sebuah file baru dengan nama `jwt.js` pada folder tersebut (`src/lib/jwt.ts`) dan menuliskan kode sebagai berikut:
+1. Masih pada file `.env.local`, menambahkan sebuah key yang baru dengan nama `JWT_SECRET` dan memberikan value bebas sebanyak minimal 16 karakter
+1. Menginstall package `jsonwebtoken` dengan perintah:
+
+   - `npm install jsonwebtoken`
+   - `npm install -D @types/jsonwebtoken`
+
+1. Membuat sebuah file baru dengan nama `jwt.ts` pada folder `utils` (`src/utils/jwt.ts`) dan menuliskan kode sebagai berikut:
 
    ```ts
-   import jwt, { JwtPayload } from "jsonwebtoken";
+   import jwt, { type JwtPayload } from "jsonwebtoken";
 
    const SECRET_KEY = process.env.JWT_SECRET || "this-is-not-a-safe-key";
 
@@ -93,14 +98,14 @@ Adapun langkah langkahnya adalah sebagai berikut:
              Login Page
            </h1>
            <input
-             className="rounded px-4 py-2"
+             className="rounded px-4 py-2 border border-gray-300"
              type="email"
              id="email"
              name="email"
              placeholder="Email"
            />
            <input
-             className="rounded px-4 py-2"
+             className="rounded px-4 py-2 border border-gray-300"
              type="password"
              id="password"
              name="password"
@@ -140,21 +145,21 @@ Adapun langkah langkahnya adalah sebagai berikut:
              Register Page
            </h1>
            <input
-             className="rounded px-4 py-2"
+             className="rounded px-4 py-2 border border-gray-300"
              type="text"
              id="username"
              name="username"
              placeholder="Username"
            />
            <input
-             className="rounded px-4 py-2"
+             className="rounded px-4 py-2 border border-gray-300"
              type="email"
              id="email"
              name="email"
              placeholder="Email"
            />
            <input
-             className="rounded px-4 py-2"
+             className="rounded px-4 py-2 border border-gray-300"
              type="password"
              id="password"
              name="password"
@@ -267,7 +272,7 @@ Adapun langkah langkahnya adalah sebagai berikut:
 
        // !! WARNING: Bila menggunakan redirect, tidak boleh menggunakan try-catch block. Hal ini dikarenakan di dalam NextJS, redirect akan meng-throw error bernama "NEXT_REDIRECT"
        if (!response.ok) {
-         let message = responseJson.error ?? "Something went wrong!";
+         const message = responseJson.error ?? "Something went wrong!";
 
          // Harapannya di sini adalah ketika ada error, maka kita akan redirect ke halaman register dengan URLSearchParams dengan key "error" yang berisi pesan errornya, dengan asumsi bahwa error SELALU string
          return redirect(`/register?error=${message}`);
@@ -355,8 +360,8 @@ Adapun langkah-langkahnya adalah sebagai berikut:
    "use server";
 
    import { getUserByEmail } from "@/db/models/user";
-   import { compareTextWithHash } from "@/db/utils/hash";
-   import { createToken } from "@/lib/jwt";
+   import { compareTextWithHash } from "@/utils/hash";
+   import { createToken } from "@/utils/jwt";
 
    import { redirect } from "next/navigation";
 
@@ -403,7 +408,7 @@ Adapun langkah-langkahnya adalah sebagai berikut:
        !compareTextWithHash(parsedData.data.password, user.password)
      ) {
        return redirect(
-         `http://localhost:3000/login?error=Invalid%20credentials`
+         "http://localhost:3000/login?error=Invalid%20credentials"
        );
      }
 
@@ -415,8 +420,12 @@ Adapun langkah-langkahnya adalah sebagai berikut:
 
      const token = createToken(payload);
 
+     // Menggunakan cookies storage
+     // ? Sejak NextJS v15, cookies harus dynamic (Promise)
+     // ? Sehingga harus di await terlebih dahulu
+     const cookieStorage = await cookies();
      // Menyimpan token dengan menggunakan cookies
-     cookies().set("token", token, {
+     cookieStorage.set("token", token, {
        // Meng-set cookie agar hanya bisa diakses melalui HTTP(S)
        httpOnly: true,
        // Meng-set cookie agar hanya bisa diakses melalui HTTPS, karena ini hanya untuk development, maka kita akan set false
@@ -428,7 +437,7 @@ Adapun langkah-langkahnya adalah sebagai berikut:
      });
 
      // Melakukan redirect ke halaman "/dashboard/jokes"
-     return redirect(`http://localhost:3000/dashboard/jokes`);
+     return redirect("http://localhost:3000/dashboard/jokes");
    };
    ```
 
@@ -555,8 +564,11 @@ Adapun langkah-langkahnya adalah sebagai berikut:
            action={async () => {
              "use server";
 
+             // Menggunakan cookies storage
+             const cookieStorage = await cookies();
+
              // Menghapus cookie token bila exists
-             cookies().get("token") && cookies().delete("token");
+             cookieStorage.get("token") && cookieStorage.delete("token");
 
              // Redirect ke halaman login
              redirect("/login");
@@ -642,7 +654,7 @@ Pada langkah ini kita akan mencoba untuk menggunakan middleware sederhana untuk 
 1. Menuliskan kode sebagai berikut:
 
    ```ts
-   import { NextRequest, NextResponse } from "next/server";
+   import { type NextRequest, NextResponse } from "next/server";
 
    // Ingat: middleware hanya bisa ada satu
    export const middleware = (request: NextRequest) => {
@@ -665,7 +677,7 @@ Pada langkah ini kita akan mencoba untuk menggunakan middleware sederhana untuk 
 1. Membuka kembali file `middleware.ts` dan memodifikasi filenya menjadi sebagai berikut:
 
    ```ts
-   import { NextRequest, NextResponse } from "next/server";
+   import { type NextRequest, NextResponse } from "next/server";
 
    // Ingat: middleware hanya bisa ada satu
    export const middleware = (request: NextRequest) => {
@@ -709,14 +721,15 @@ Adapun langkah-langkahnya adalah sebagai berikut:
 1. Membuka file `middleware.ts` (`src/middleware.ts`) dan memodifikasi file menjadi sebagai berikut:
 
    ```ts
-   import { NextRequest, NextResponse } from "next/server";
+   import { type NextRequest, NextResponse } from "next/server";
 
    // ?? Di sini kita akan menggunakan cookies
    import { cookies } from "next/headers";
-   import { readPayload } from "./lib/jwt";
+   import { readPayload } from "./utils/jwt";
 
    // Ingat: middleware hanya bisa ada satu
-   export const middleware = (request: NextRequest) => {
+   // ?? Karena di sini kita akan menggunakan await, maka fungsi middleware ini akan dideklarasikan sebagai async
+   export const middleware = async (request: NextRequest) => {
      // ?? Karena di sini kita akan menggunakan "logic middleware lebih dari satu", maka di sini kita akan menggunakan banyak perkondisian (menggunakan if / if-else)
 
      // ?? Karena ini fungsi yang akan dijalankan di semuanya, maka kita akan comment yah
@@ -742,11 +755,11 @@ Adapun langkah-langkahnya adalah sebagai berikut:
        console.log("API", request.method, request.url);
 
        // Di sini kita akan mengambil token yang ada di dalam cookies
-       const cookiesStore = cookies();
-       const token = cookiesStore.get("token");
+       const cookieStorage = await cookies();
+       const token = cookieStorage.get("token");
 
        // Mari kita coba baca apa isi dari token?
-       console.log("token dari cookieStore", token);
+       console.log("token dari cookieStorage", token);
 
        // Di sini kita akan mengecek apakah token ada atau tidak, apabila tidak ada, maka kita akan mengembalikan response dengan status code 401 (Unauthorized)
        if (!token) {
@@ -812,10 +825,15 @@ Adapun langkah-langkahnya adalah sebagai berikut:
    import { cookies } from "next/headers";
 
    const fetchUsers = async () => {
+     // Di sini kita akan menggunakan cookieStorage
+     const cookieStorage = await cookies();
+
      const response = await fetch("http://localhost:3000/api/users", {
        headers: {
-         // Spesifik hanya pada NextJS, kita harus menambahkan Cookie: cookies().toString() pada headers.
-         Cookie: cookies().toString(),
+         // Spesifik hanya pada NextJS (server to server), kita harus menambahkan data berikut:
+         // - key: Cookie
+         // - value: cookieStorage.toString()
+         Cookie: cookieStorage.toString(),
        },
        // Sebenarnya untuk kondisi umumnya, untuk melempar cookies yang sekarang ini sedang disimpan pada client ke server, kita bisa menggunakan credentials: "include" pada fetch. Namun pada NextJS, kita tidak bisa menggunakan credentials: "include" saja.
        // credentials: "include",
@@ -842,9 +860,18 @@ Adapun langkah-langkahnya adalah sebagai berikut:
 
    ```ts
    import { createUser, getUsers } from "@/db/models/user";
-   import { NextRequest, NextResponse } from "next/server";
+   import { type NextRequest, NextResponse } from "next/server";
    import { z } from "zod";
 
+   // Type definitions untuk Response yang akan dikembalikan
+   // Asumsi dari data yang dikembalikan:
+   // (Dibuat menjadi umum agar bisa digunakan di berbagai Response)
+   /*
+      statusCode: number; <--- harus selalu ada statusCode
+      message?: string; <--- optional
+      data?: T; <--- optoinal dan berupa Generic Type
+      error?: string; <--- optional
+    */
    type MyResponse<T> = {
      statusCode: number;
      message?: string;
@@ -852,18 +879,59 @@ Adapun langkah-langkahnya adalah sebagai berikut:
      error?: string;
    };
 
-   const userInputSchema = z.object({
-     username: z.string(),
-     email: z.string().email(),
-     password: z.string().min(6),
-     super_admin: z.boolean().optional(),
-     original_name: z.string().optional(),
-   });
+   // Membuat schema untuk validasi input dari client
+   /*
+      Harapan dari input client adalah:
+   
+      {
+        "username": string, required;
+        "email": string, required, email;
+        "password": string, required, min 6 karakter;
+        "super_admin": boolean, optional;
+        "original_name": string, optional;
+      }
+    */
+   const UserInputSchema = z
+     // Awalnya adalah sebuah object
+     .object({
+       // Key "username" harus ada dan bertipe string
+       // Bila tidak ada, maka akan error
+       username: z.string(),
+       // Key "email" harus ada dan bertipe string dan harus berformat email
+       // Bila bukan email, kita akan berikan error message "Email tidak valid"
+       email: z.string().email({
+         message: "Email tidak valid",
+       }),
+       // Key "password" harus ada dan bertipe string dan minimal 6 karakter
+       // Bila bukan string, kita akan berikan error message "Password harus berupa string"
+       // Bila kurang dari 6 karakter, kita akan berikan error message "Password minimal 6 karakter"
+       password: z
+         .string({
+           message: "Password harus berupa string",
+         })
+         .min(6, {
+           message: "Password minimal 6 karakter",
+         }),
+       // Key "super_admin" adalah optional dan bertipe boolean
+       // Bila bukan boolean, kita akan berikan error message "Super Admin harus berupa boolean"
+       super_admin: z
+         .boolean({
+           message: "Super Admin harus berupa boolean",
+         })
+         .optional(),
+       // Key "original_name" adalah optional dan bertipe string
+       // Bila bukan string, kita akan berikan error message "Original Name harus berupa string"
+       original_name: z
+         .string({
+           message: "Original Name harus berupa string",
+         })
+         .optional(),
+     });
 
    // GET /api/users
-
-   // ?? Di sini kita akan membaca headers yang ada di dalam request
+   // ?? Di sini kita akan menggunakan NextRequest
    export const GET = async (request: NextRequest) => {
+     // Di sini kita akan menggunakan fungsi getUsers() yang sudah kita buat sebelumnya
      const users = await getUsers();
 
      // ?? Kita akan membaca headers yang ada di dalam request
@@ -872,49 +940,112 @@ Adapun langkah-langkahnya adalah sebagai berikut:
      console.log("x-user-email", request.headers.get("x-user-email"));
      console.log("x-custom-value", request.headers.get("x-custom-value"));
 
+     // Di sini yang akan dikembalikan adalah Response dari Web API
+     // (Standard Web API: Request untuk mendapatkan data dan Request untuk mengirimkan data)
+     // https://developer.mozilla.org/en-US/docs/Web/API/Request
+     // https://developer.mozilla.org/en-US/docs/Web/API/Response
      return Response.json(
+       // Data yang akan dikirimkan ke client
        {
          statusCode: 200,
          message: "Pong from GET /api/users !",
+         // Di sini kita akan mengirimkan data users
          data: users,
        },
+       // Object informasi tambahan (status code, headers, dll)
        {
+         // Default status adalah 200
          status: 200,
        }
      );
    };
 
    // POST /api/users
+   // Menambahkan parameter request: Request pada POST
    export const POST = async (request: Request) => {
+     // Membungkus logic dalam try-catch
      try {
+       // Di sini kita akan menggunakan NextResponse yang merupakan extend dari Response
+       // Keuntungan dengan menggunakan NextResponse adalah kita bisa menuliskan kembalian dari Response dengan lebih presisi dengan Generic Type dan memiliki beberapa method yang tidak ada di Response.
+       // https://nextjs.org/docs/pages/api-reference/functions/next-server#nextresponse
+       // Misalnya di sini kita menuliskan bahwa Response yang akan dikembalikan adalah MyResponse yang mana memiliki Generic Type never (tidak ada data yang dikembalikan) untuk key "data"
+
+       /*
+        {
+          statusCode: number; <--- harus selalu ada statusCode
+          message?: string; <--- bisa ada "message" bisa tidak
+          data?: never; <--- menjadi tidak ada "data" yang dikembalikan
+          error?: string; <--- bisa ada "error" bisa tidak
+        }
+      */
+
+       // Di sini kita akan mengambil data yang dikirimkan oleh client
+       // Asumsi: data yang dikirimkan oleh client adalah JSON
+       // Perhatikan bahwa tipe data ini akan selalu menjadi "any"
        const data = await request.json();
 
-       const parsedData = userInputSchema.safeParse(data);
+       // Sebelum data akan digunakan, kita akan melakukan validasi terlebih dahulu
+       // Di sini kita akan menggunakan fungsi safeParse() dari zod
+       const parsedData = UserInputSchema.safeParse(data);
 
+       // parsedData akan mengembalikan object dengan tipe data berikut:
+       /*
+          {
+            success: boolean;
+            data: unknown;
+            error: z.ZodError | null;
+          }
+        */
+
+       // Sehingga di sini kita akan melakukan pengecekan terlebih dahulu
        if (!parsedData.success) {
+         // Kita akan throw error yang merupakan ZodError
          throw parsedData.error;
        }
 
+       // Bila tidak ingin melakukan asumsi, maka kita bisa mengeceknya berdasarkan header "Content-Type"
+       // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Type
+       // const contentType = request.headers.get("Content-Type");
+       // if (contentType !== "application/json") { ... }
+
+       // Di sini kita akan menggunakan fungsi createUser() yang sudah kita buat sebelumnya
+       // const user = await createUser(data);
+
+       // Di sini kita akan mengirimkan parsedData, bukan data
        const user = await createUser(parsedData.data);
 
+       // Mengubah tipe kembalian menjadi unknown
        return NextResponse.json<MyResponse<unknown>>(
+         // Data yang akan dikirimkan ke client
          {
            statusCode: 201,
            message: "Pong from POST /api/users !",
+           // Di sini kita akan mengirimkan data user
            data: user,
          },
+         // Object informasi tambahan (status code, headers, dll)
          {
+           // Karena di sini menggunakan non-default status (bukan 200)
+           // maka di sini kita menuliskan status: 201
            status: 201,
          }
        );
      } catch (err) {
+       // Perhatikan tipe data dari err adalah unknown dan kita akan menangkap error dari zod yang merupakan ZodError
+       // Sehingga di sini kita harus melakukan pengecekan terlebih dahulu
        if (err instanceof z.ZodError) {
          console.log(err);
 
+         // Di sini kita akan mengambil path dan message dari error yang terjadi
+         // path = key dari object yang tidak sesuai dengan schema
+         // message = pesan error yang terjadi
          const errPath = err.issues[0].path[0];
          const errMessage = err.issues[0].message;
 
+         // Di sini kita akan mengembalikan NextResponse dengan status 400
+         // karena client mengirimkan data yang tidak sesuai dengan schema yang kita buat
          return NextResponse.json<MyResponse<never>>(
+           // Data yang akan dikirimkan ke client
            {
              statusCode: 400,
              error: `${errPath} - ${errMessage}`,
@@ -925,6 +1056,8 @@ Adapun langkah-langkahnya adalah sebagai berikut:
          );
        }
 
+       // Di sini kita akan mengembalikan NextResponse dengan status 500
+       // karena terjadi error yang tidak terduga
        return NextResponse.json<MyResponse<never>>(
          {
            statusCode: 500,
@@ -940,11 +1073,11 @@ Adapun langkah-langkahnya adalah sebagai berikut:
 
 1. Pastikan pada browser user sudah melakukan login, kemudian buka tautan `http://localhost:3000/dashboard` dan lihat hasilnya, apakah data user sudah muncul?
 
-   Ternyata _tydaque_ muncul yah T_T
+   Ternyata _tydaque_ muncul yah 😭
 
    Walaupun pada terminal sudah terlihat bahwa token sudah berhasil dibaca oleh middlware pada saat mengakses `API GET http://localhost:3000/api/users`, namun terdapat error yang menyatakan:
 
-   - `Error: The edge runtime does not support Node.js 'crypto' module.`
+   > ❌ Error: The edge runtime does not support Node.js 'crypto' module.
 
    Hal ini terjadi karena pada saat menggunakan fungsi `readPayload` yang merupakan `jsonwebtoken.verify`, menggunakan fungsi nodejs `crypto` yang tidak didukung oleh `edge runtime` yang digunakan oleh NextJS.
 
@@ -954,24 +1087,26 @@ Adapun langkah-langkahnya adalah sebagai berikut:
 
    Mari kita pasang package `jose` dengan menggunakan perintah `npm i jose`
 
-   Kemudian membuka kembali file `lib/jwt.ts` dan memodifikasinya menjadi sebagai berikut:
+   Kemudian membuka kembali file `utils/jwt.ts` dan memodifikasinya menjadi sebagai berikut:
 
    ```ts
-   import jwt from "jsonwebtoken";
+   import jwt, { type JwtPayload } from "jsonwebtoken";
 
    // ?? Di sini kita akan menggunakan jose
    import * as jose from "jose";
 
    const SECRET_KEY = process.env.JWT_SECRET || "this-is-not-a-safe-key";
 
-   // Di sini kita menerima payload dalam bentuk suatu object
-   export const createToken = (payload: object) =>
+   // Di sini kita menerima payload berupa object (JwtPayload) yang berisi data yang akan disimpan di dalam token.
+   export const createToken = (payload: JwtPayload) =>
      jwt.sign(payload, SECRET_KEY);
 
    // Di sini kita menerima token berupa string yang berisi token yang akan dibaca.
    export const readPayload = (token: string) => jwt.verify(token, SECRET_KEY);
 
-   // ?? Di sini kita akan menambahkan fungsi untuk membaca payload dengan jose, karena di sini kita membutuhkan tipe data kembalian, maka kita akan menambahkan generic
+   // ?? Contoh penggunaan bisa dilihat di:
+   // ?? - https://github.com/panva/jose/blob/main/docs/jwt/verify/functions/jwtVerify.md
+   // ?? Di sini kita akan menambahkan fungsi untuk membaca payload dengan jose, karena di sini kita membutuhkan tipe data kembalian, maka kita akan menambahkan generic untuk function
    export const readPayloadJose = async <T>(token: string) => {
      const secretKey = new TextEncoder().encode(SECRET_KEY);
      const payloadJose = await jose.jwtVerify<T>(token, secretKey);
@@ -983,18 +1118,26 @@ Adapun langkah-langkahnya adalah sebagai berikut:
 1. Kemudian kita akan membuka kembali file `middleware.ts` (`src/middleware.ts`) dan memodifikasinya menjadi sebagai berikut:
 
    ```ts
-   import { NextRequest, NextResponse } from "next/server";
+   import { type NextRequest, NextResponse } from "next/server";
 
    // ?? Di sini kita akan menggunakan cookies
    import { cookies } from "next/headers";
-   // ?? Ini sudah tidak digunakan lagi
-   // import {readPayload } from "./lib/jwt"
-   // ?? Jangan lupa import readPayloadJose
-   import { readPayloadJose } from "./lib/jwt";
+   // ?? Jangan lupa untuk import readPayloadJose
+   // import { readPayload } from "./utils/jwt";
+   import { readPayloadJose } from "./utils/jwt";
 
    // Ingat: middleware hanya bisa ada satu
-   // ?? Sekarang karena kita akan menggunakan jose yang promise based, ini akan menjadi async
+   // ?? Karena di sini kita akan menggunakan await, maka fungsi middleware ini akan dideklarasikan sebagai async
    export const middleware = async (request: NextRequest) => {
+     // ?? Karena di sini kita akan menggunakan "logic middleware lebih dari satu", maka di sini kita akan menggunakan banyak perkondisian (menggunakan if / if-else)
+
+     // ?? Karena ini fungsi yang akan dijalankan di semuanya, maka kita akan comment yah
+     // // Di sini harapannya kita hanya ingin menuliskan HTTP method apa yang sedang digunakan dan url apa yang sedang dituju
+     // console.log(request.method, request.url);
+
+     // // Seperti pada Express, karena ini middleware, kita harus meng-"sliding" supaya request bisa dilanjutkan ke handler berikutnya dengan menggunakan "next()"
+     // return NextResponse.next();
+
      // ?? Di sini kita akan menambahkan kondisi untuk meng-exclude semua url yang mengandung kata "api", "_next/static", "_next/image", dan "favicon.ico"
      if (
        !request.url.includes("/api") &&
@@ -1011,11 +1154,11 @@ Adapun langkah-langkahnya adalah sebagai berikut:
        console.log("API", request.method, request.url);
 
        // Di sini kita akan mengambil token yang ada di dalam cookies
-       const cookiesStore = cookies();
-       const token = cookiesStore.get("token");
+       const cookieStorage = await cookies();
+       const token = cookieStorage.get("token");
 
        // Mari kita coba baca apa isi dari token?
-       console.log("token dari cookieStore", token);
+       console.log("token dari cookieStorage", token);
 
        // Di sini kita akan mengecek apakah token ada atau tidak, apabila tidak ada, maka kita akan mengembalikan response dengan status code 401 (Unauthorized)
        if (!token) {
@@ -1035,6 +1178,11 @@ Adapun langkah-langkahnya adalah sebagai berikut:
        const tokenData = await readPayloadJose<{ id: string; email: string }>(
          token.value
        );
+       // !! Yang sebelumnya ini tidak digunakan lagi...
+       // const tokenData = readPayload(token.value) as {
+       //   id: string;
+       //   email: string;
+       // };
 
        // Setelah itu umumnya kita akan melakukan penambahan data ke dalam request yang kita miliki (request.user = tokenData), namun karena di sini kita tidak bisa memiliki data tambahan di dalam request, maka kita akan menggunakan antara cookies ATAU headers
 
@@ -1072,19 +1220,24 @@ Adapun langkah-langkahnya adalah sebagai berikut:
 1. Membuat sebuah component baru dengan nama `ServerProtectedComponent.tsx` pada folder `components` (`src/components/ServerProtectedComponent.tsx`) dan menuliskan kode sebagai berikut:
 
    ```tsx
+   // ?? Ingat baik baik cookies hanya bisa digunakan di:
+   // ?? - (Read Only) Server Component
+   // ?? - (Read & Write) Server Action
+   // ?? - (Read & Write) Route Handler
+   // ?? - (Read & Write) Middleware
    import { cookies } from "next/headers";
    import { redirect } from "next/navigation";
 
-   const ServerProtectedComponents = ({
+   const ServerProtectedComponent = async ({
      children,
    }: {
      children: React.ReactNode;
    }) => {
      // Membaca cookies
-     const cookiesStore = cookies();
+     const cookieStore = await cookies();
 
-     // Mengambil token dari cookies
-     const token = cookiesStore.get("token");
+     // Mengambil token dari cookieStore
+     const token = cookieStore.get("token");
 
      // Mengecek apabila token tidak ada, maka redirect ke halaman login
      if (!token || token.value.length <= 0) {
@@ -1095,21 +1248,21 @@ Adapun langkah-langkahnya adalah sebagai berikut:
      return <>{children}</>;
    };
 
-   export default ServerProtectedComponents;
+   export default ServerProtectedComponent;
    ```
 
 1. Karena pada `dashboard` ini kita sudah memanfaatkan `layout.tsx`, maka kita hanya perlu memodifikasi file `layout.tsx` (`src/app/dashboard/layout.tsx`) menjadi sebagai berikut:
 
    ```tsx
    import DashboardSidebar from "@/components/DashboardSidebar";
-   // Import ServerProtectedComponents
-   import ServerProtectedComponents from "@/components/ServerProtectedComponents";
+   // Import ServerProtectedComponent
+   import ServerProtectedComponent from "@/components/ServerProtectedComponent";
 
    const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
      return (
        // Whole Screen
-       // Gunakan ServerProtectedComponents sebagai parent
-       <ServerProtectedComponents>
+       // Gunakan ServerProtectedComponent sebagai parent
+       <ServerProtectedComponent>
          <section className="flex h-screen w-full">
            {/* Left Side */}
            <DashboardSidebar />
@@ -1120,7 +1273,7 @@ Adapun langkah-langkahnya adalah sebagai berikut:
              {children}
            </main>
          </section>
-       </ServerProtectedComponents>
+       </ServerProtectedComponent>
      );
    };
 
@@ -1137,6 +1290,6 @@ Pembelajaran ini cukup panjang juga yah, semoga mendapatkan insight yang lebih d
 
 ## References
 
-- https://nextjs.org/docs/app/building-your-application/routing/middleware
-- https://nextjs.org/docs/app/api-reference/functions/cookies
-- https://www.npmjs.com/package/jose
+- <https://nextjs.org/docs/app/building-your-application/routing/middleware>
+- <https://nextjs.org/docs/app/api-reference/functions/cookies>
+- <https://www.npmjs.com/package/jose>
