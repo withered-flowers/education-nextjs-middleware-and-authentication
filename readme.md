@@ -366,7 +366,7 @@ Adapun langkah-langkahnya adalah sebagai berikut:
    import { redirect } from "next/navigation";
 
    // Di sini kita akan membuat schema inputan login, maka dari itu, sekalian kita validasi dengan zod
-   import { z } from "zod";
+   import * as z from "zod";
 
    // Di sini kita akan menyimpan data token pada cookies, maka dari itu, kita akan menggunakan cookies dari next/headers
    // !! cookies tidak bisa di-import secara otomatis, jadi harus diketik manual yah
@@ -376,7 +376,7 @@ Adapun langkah-langkahnya adalah sebagai berikut:
    // Karena kita di sini belum memiliki backend yang bisa di-call, kita akan membuat logicnya di sini (asumsikan di sini se-akan-akan kita sedang berada di server)
    export const doLogin = async (formData: FormData) => {
      const loginInputSchema = z.object({
-       email: z.string().email(),
+       email: z.email(),
        password: z.string(),
      });
 
@@ -394,7 +394,7 @@ Adapun langkah-langkahnya adalah sebagai berikut:
        // !! Ingat, jangan di-throw kecuali ingin menghandle error di sisi client via error.tsx !
        const errPath = parsedData.error.issues[0].path[0];
        const errMessage = parsedData.error.issues[0].message;
-       const errFinalMessage = `${errPath} - ${errMessage}`;
+       const errFinalMessage = `${String(errPath)} - ${errMessage}`;
 
        // Mengembalikan error via redirect
        return redirect(`http://localhost:3000/login?error=${errFinalMessage}`);
@@ -861,7 +861,7 @@ Adapun langkah-langkahnya adalah sebagai berikut:
    ```ts
    import { createUser, getUsers } from "@/db/models/user";
    import { type NextRequest, NextResponse } from "next/server";
-   import { z } from "zod";
+   import * as z from "zod";
 
    // Type definitions untuk Response yang akan dikembalikan
    // Asumsi dari data yang dikembalikan:
@@ -899,7 +899,7 @@ Adapun langkah-langkahnya adalah sebagai berikut:
        username: z.string(),
        // Key "email" harus ada dan bertipe string dan harus berformat email
        // Bila bukan email, kita akan berikan error message "Email tidak valid"
-       email: z.string().email({
+       email: z.email({
          message: "Email tidak valid",
        }),
        // Key "password" harus ada dan bertipe string dan minimal 6 karakter
@@ -1048,7 +1048,7 @@ Adapun langkah-langkahnya adalah sebagai berikut:
            // Data yang akan dikirimkan ke client
            {
              statusCode: 400,
-             error: `${errPath} - ${errMessage}`,
+             error: `${String(errPath)} - ${errMessage}`,
            },
            {
              status: 400,
